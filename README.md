@@ -10,3 +10,17 @@ Deploy it using `serverless deploy`. Can be deployed for example on AWS.
 
 - `/commits` number of recent commits (both public and private)
 - `/repos` number of repos (both public and private)
+
+## Development
+
+### ``serverless offline``
+
+Runs local server with all the functions.
+
+### ``serverless invoke -f &lt;function-name&gt;``
+
+Runs a single function locally, for example `getCommitsCnt`.
+
+## Deploy
+
+`serverless deploy` deploys functions to the service provider.
