@@ -59,11 +59,14 @@ module.exports = {
 
 const getRepos = (page) =>
   axios
-    .get(`https://api.github.com/user/repos?page=${page}`, {
-      headers: {
-        Authorization: `token ${process.env.TOKEN}`,
-      },
-    })
+    .get(
+      `https://api.github.com/user/repos?page=${page}&per_page=${ITEMS_PER_PAGE}&type=owner`,
+      {
+        headers: {
+          Authorization: `token ${process.env.TOKEN}`,
+        },
+      }
+    )
     .then((res) => res.data);
 
 const getReposCnt = async () => {
