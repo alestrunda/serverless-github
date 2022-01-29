@@ -4,7 +4,11 @@ require("dotenv").config();
 const axios = require("axios");
 
 const USERNAME = "alestrunda";
-const MAX_PAGE = 10;
+const EVENTS_HISTORY_AGO_MONTHS = 2;
+
+// github api returns up to 300 results
+const ITEMS_PER_PAGE = 60;
+const MAX_PAGE = 5;
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -34,9 +38,11 @@ module.exports = {
   },
   getCommitsCnt: async () => {
     try {
-      //commits that are not older than 3 month (github api returns this activity from up to 90 days ago)
+      // filter commits that are not older then some date (github api returns this activity from up to 90 days ago)
       const commits_date = new Date();
-      commits_date.setMonth(commits_date.getMonth() - 3);
+      commits_date.setMonth(
+        commits_date.getMonth() - EVENTS_HISTORY_AGO_MONTHS
+      );
       const commits = await getCommitsSince(commits_date);
       return {
         statusCode: 200,
@@ -79,26 +85,31 @@ const getReposCnt = async () => {
   return total;
 };
 
-const getCommits = (page) =>
+const getEvents = (page) =>
   axios
-    .get(`https://api.github.com/users/${USERNAME}/events?page=${page}`, {
-      headers: {
-        Authorization: `token ${process.env.TOKEN}`,
-      },
-    })
+    .get(
+      `https://api.github.com/users/${USERNAME}/events?page=${page}&per_page=${ITEMS_PER_PAGE}`,
+      {
+        headers: {
+          Authorization: `token ${process.env.TOKEN}`,
+        },
+      }
+    )
     .then((res) => res.data);
 
 const getCommitsSince = async (date) => {
   let commits = [];
   for (let page = 1; page <= MAX_PAGE; page++) {
-    const current_commits = await getCommits(page);
-    if (!current_commits.length) break;
-    const commits_since = filterCommitsSince(current_commits, date);
-    if (!commits_since.length) break;
-    commits = commits.concat(commits_since);
+    const events = await getEvents(page);
+    const all_commits = events.filter(isCommit);
+    const latest_commits = filterCommitsSince(all_commits, date);
+    if (!latest_commits.length) break;
+    commits = commits.concat(latest_commits);
   }
   return commits;
 };
 
 const filterCommitsSince = (commits, date) =>
   commits.filter((commit) => date <= new Date(commit.created_at));
+
+const isCommit = (event) => event.type === "PushEvent";
